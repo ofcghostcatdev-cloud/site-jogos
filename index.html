@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameHub Cloud</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: sans-serif; margin: 0; background: #121212; color: white; padding-bottom: 50px; }
+        header { background: #1f1f1f; padding: 20px; text-align: center; border-bottom: 3px solid #00ff88; }
+        .container { padding: 15px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #2a2a2a; color: white; }
+        button { width: 100%; padding: 15px; background: #00ff88; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+        .game-item { background: #1e1e1e; border-radius: 10px; overflow: hidden; text-align: center; border: 1px solid #333; padding: 10px; }
+        .btn-down { display: block; background: #333; color: #00ff88; text-decoration: none; padding: 5px; margin-top: 10px; border-radius: 5px; font-size: 12px; border: 1px solid #00ff88; }
+    </style>
+</head>
+<body>
+
+<header><h1>🎮 GC_STORE</h1></header>
+
+<div class="container">
+    <section>
+        <h2>Publicar Jogo (Global)</h2>
+        <div class="card">
+            <input type="text" id="gameName" placeholder="Nome do jogo">
+            <input type="text" id="gameUrl" placeholder="Link do download (Drive/Mediafire)">
+            <button id="btnPublicar">Publicar Agora</button>
+        </div>
+    </section>
+
+    <h2>Jogos da Comunidade</h2>
+    <div class="game-grid" id="listaJogos">Carregando jogos...</div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // CONFIGURAÇÃO DO GOOGLE (Você vai substituir isso no passo abaixo)
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY",
+    authDomain: "SEU_PROJETO.firebaseapp.com",
+    projectId: "SEU_PROJETO",
+    storageBucket: "SEU_PROJETO.appspot.com",
+    messagingSenderId: "ID",
+    appId: "APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const gamesCol = collection(db, "jogos");
+
+  // Função para Publicar
+  document.getElementById('btnPublicar').onclick = async () => {
+    const nome = document.getElementById('gameName').value;
+    const url = document.getElementById('gameUrl').value;
+
+    if(nome && url) {
+      await addDoc(gamesCol, { nome, url, data: Date.now() });
+      document.getElementById('gameName').value = '';
+      document.getElementById('gameUrl').value = '';
+      alert("Jogo salvo no banco de dados!");
+    }
+  };
+
+  // Função para Listar Jogos em Tempo Real
+  const q = query(gamesCol, orderBy("data", "desc"));
+  onSnapshot(q, (snapshot) => {
+    const lista = document.getElementById('listaJogos');
+    lista.innerHTML = '';
+    snapshot.forEach(doc => {
+      const jogo = doc.data();
+      lista.innerHTML += `
+        <div class="game-item">
+            <div style="font-size:40px">🕹️</div>
+            <h3>${jogo.nome}</h3>
+            <a href="${jogo.url}" target="_blank" class="btn-down">DOWNLOAD</a>
+        </div>`;
+    });
+  });
+</script>
+</body>
+</html>
